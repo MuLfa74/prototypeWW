@@ -1,0 +1,101 @@
+body{
+    background-color: #1F1B1B;
+    color: #FFFFFF;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+.header{
+    background-color: #473F3F;
+    height: 100px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;           
+}
+
+label{
+    color: #FFFFFF;
+    font-size: 1.5em;
+    font-style: bold;
+    margin-left: 10px;
+}
+
+.header .inputtext{
+    display: flex;
+    color: #FFFFFF;
+    background-color: #1F1B1B;
+    height: 3em;
+    width: 50%;
+    flex-direction: row;
+    border-radius: 20px;
+    overflow: hidden;
+    align-items: center;
+}
+
+.inputtext img {
+    height: 2em;
+}
+
+.inputtext input {
+    background-color: #1F1B1B;
+    color: #FFFFFF;
+    padding: 0px;
+    border: 0;
+    height: 1em;
+}
+
+.inputtext input:focus-visible {
+    outline: 0;
+}
+
+.header .button{
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    height: 3em;
+    width: 5em;
+    color: #FFFFFF;
+    background-color: #1F1B1B;
+    margin-right: 10px;
+    border-radius: 20px;
+}
+
+.main-content{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.feed {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.event{
+    background-color: #473F3F;
+    border-radius: 20px;
+    width: 100%;
+}
+
+.side-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 15%;
+    gap: 10px;
+}
+
+.side-bar .card{
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    background-color: #473F3F;
+    border-radius: 20px;
+    width: 100%;
+    height: 3em;
+}
