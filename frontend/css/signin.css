@@ -1,0 +1,32 @@
+/* 2. Стили для самого контейнера авторизации */
+.auth-container {
+    padding: 40px;
+    width: 100%;
+    max-width: 360px; /* Ограничиваем ширину формы */
+    box-sizing: border-box;
+}
+
+.inputtext {
+    margin-bottom: 15px;
+}
+
+.inputtext input{ 
+    background-color: #473F3F;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.auth-btn {
+    width: 50%;
+    padding: 12px;
+    background-color: #736D6D;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.auth-btn:hover {
+    background-color: #5f5a5a;
+}

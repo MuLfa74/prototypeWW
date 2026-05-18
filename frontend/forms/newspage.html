@@ -8,12 +8,11 @@
     <title>PrototypeWW | News</title>
 </head>
 <body>
-    <!-- HEADER -->
     <div class="header">
         <label>PrototypeWW</label>
         <div class="inputtext">
-            <img sizes="" src="../assets/search-svgrepo-com.svg" alt="Найти"></a>
-            <input type="text" placeholder="Поиск">
+            <img sizes="" src="../assets/search-svgrepo-com.svg" alt="Найти">
+            <input type="text" id="search-input" placeholder="Поиск">
         </div>
         <div class="button"><a>Карта</a></div>
     </div>
@@ -25,10 +24,13 @@
             <div class="card">Происшествия</div>
             <div class="card">Культура</div>
         </div>
-        <div class="feed">
-            <!--Заглушки-->
-            <div class="event">sss</div>
-            <div class="event">sss</div>
+        <div class="feed" id="feed">
+            <script src="../js/render_news.js"></script>
+            <script>
+                if (document.getElementById('feed').querySelectorAll('.event').length === 0) {
+                    document.getElementById('feed').innerHTML = '<center>Упс.. кажется новостей нет</center>';
+                }
+            </script>
         </div>
         <div class="side-bar">
             <label>Сводка дня</label>

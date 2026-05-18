@@ -1,3 +1,7 @@
+html {
+  overflow-y: scroll;
+}
+
 body{
     background-color: #1F1B1B;
     color: #FFFFFF;
@@ -44,6 +48,7 @@ label{
     padding: 0px;
     border: 0;
     height: 1em;
+    width: 90%;
 }
 
 .inputtext input:focus-visible {
@@ -78,8 +83,25 @@ label{
 
 .event{
     background-color: #473F3F;
+    padding: 0 10px 10px 10px;
     border-radius: 20px;
     width: 100%;
+}
+
+.full-article {
+    display: none;
+}
+
+.full-article.show {
+    display: block;
+}
+
+.annotation.show {
+    display: none;
+}
+
+.annotation {
+    display: block;
 }
 
 .side-bar {
