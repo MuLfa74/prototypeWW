@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/fonts.css">
+    <link rel="stylesheet" href="../css/map.css">
+
+    <title>PrototypeWW | Карта</title>
+
+    <!-- Yandex Maps API -->
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU"></script>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+
+        <label>PrototypeWW</label>
+
+        <div class="inputtext">
+
+            <img
+                src="../assets/search-svgrepo-com.svg"
+                alt="Поиск"
+            >
+
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Поиск события"
+            >
+
+        </div>
+
+        <div class="button">
+            <a href="newspage.html">
+                Новости
+            </a>
+        </div>
+
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-content">
+
+        <!-- LEFT SIDEBAR -->
+        <div class="side-bar">
+
+            <label>Категории</label>
+
+            <div
+                class="card category-btn"
+                data-category="ДТП"
+            >
+                ДТП
+            </div>
+
+            <div
+                class="card category-btn"
+                data-category="Происшествия"
+            >
+                Происшествия
+            </div>
+
+            <div
+                class="card category-btn"
+                data-category="Культура"
+            >
+                Культура
+            </div>
+
+            <div
+                class="card category-btn"
+                data-category="Общество"
+            >
+                Общество
+            </div>
+
+        </div>
+
+        <!-- MAP -->
+        <div class="map-wrapper">
+
+            <div id="map"></div>
+
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="side-bar">
+
+            <label>Сводка дня</label>
+
+            <div class="event">
+                ДТП на Ленина
+            </div>
+
+            <div class="event">
+                Открытие выставки
+            </div>
+
+            <div class="event">
+                Пожар в центре
+            </div>
+
+            <div class="event">
+                Перекрытие дороги
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="../js/map.js"></script>
+
+</body>
+</html>
