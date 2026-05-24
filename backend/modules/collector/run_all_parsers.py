@@ -4,7 +4,14 @@
 """
 import sys
 import os
+import json
 from datetime import datetime
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 
 # Добавляем путь к папке backend (где лежит db.py)
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -31,6 +38,42 @@ from parser_factornews import parse_factornews
 from parser_gubdaily import parse_gubdaily
 from parser_vk import parse_all_vk_groups
 
+STATUS_FILE = os.path.join(os.path.dirname(__file__), 'parse_status.json')
+
+
+def normalize_title(title):
+    return ' '.join(str(title or '').split()).strip().lower()
+
+
+def dedupe_news_by_title(all_news):
+    unique_news = []
+    seen_titles = set()
+
+    for news in all_news:
+        title = news.get('title') or news.get('header') or news.get('link') or ''
+        title_key = normalize_title(title)
+        if not title_key:
+            title_key = normalize_title(news.get('content') or news.get('text') or '')
+
+        if title_key in seen_titles:
+            continue
+
+        seen_titles.add(title_key)
+        unique_news.append(news)
+
+    return unique_news
+
+
+def write_parse_status(all_news):
+    status = {
+        "last_updated": datetime.now().isoformat(timespec='seconds'),
+        "news_count": len(all_news),
+        "sources": sorted({news.get('source', '') for news in all_news if news.get('source')}),
+    }
+
+    with open(STATUS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(status, f, ensure_ascii=False, indent=2)
+
 def save_to_mongodb(all_news, collection_name=None):
     """
     Сохраняет новости в MongoDB
@@ -47,14 +90,22 @@ def save_to_mongodb(all_news, collection_name=None):
         return 0
     
     try:
+        all_news = dedupe_news_by_title(all_news)
+
         # Подключаемся к MongoDB
         collection = get_mongo_collection(collection_name)
         
         # Подготавливаем документы для вставки
         documents = []
         for news in all_news:
+            header = news.get('title', '').strip()
+            header_key = normalize_title(header)
+            if not header_key:
+                continue
+
             doc = {
-                "header": news.get('title', ''),
+                "header": header,
+                "header_key": header_key,
                 "content": news.get('content', news.get('text', '')),
                 "annotation": create_annotation(news.get('content', news.get('text', '')), 200),
                 "category": news['category']['name'],
@@ -68,9 +119,21 @@ def save_to_mongodb(all_news, collection_name=None):
         
         # Вставка в MongoDB
         if documents:
-            result = collection.insert_many(documents)
-            print(f"\n✅ Сохранено в MongoDB: {len(result.inserted_ids)} документов")
-            return len(result.inserted_ids)
+            inserted_count = 0
+            updated_count = 0
+            for doc in documents:
+                result = collection.update_one(
+                    {"header_key": doc["header_key"]},
+                    {"$set": doc, "$setOnInsert": {"created_at": datetime.now()}},
+                    upsert=True,
+                )
+                if result.upserted_id is not None:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+
+            print(f"\n✅ Сохранено/обновлено в MongoDB: {inserted_count} новых, {updated_count} обновлено")
+            return len(documents)
         else:
             return 0
             
@@ -171,6 +234,8 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True, s
     if not all_news:
         print("\n❌ Не удалось спарсить новости ни с одного источника")
         return []
+
+    all_news = dedupe_news_by_title(all_news)
     
     print("\n" + "="*60)
     print("📊 ОБЩАЯ СТАТИСТИКА")
@@ -196,12 +261,14 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True, s
             print(f"\n❌ Ошибка при работе с MongoDB: {e}")
         finally:
             close()
+
+    write_parse_status(all_news)
     
     return all_news
 
 def main():
     """Точка входа для однократного запуска"""
-    MAX_NEWS_PER_SOURCE = 5
+    MAX_NEWS_PER_SOURCE = 10
     INCLUDE_VK = True
     SAVE_TO_FILE = True
     SAVE_TO_DB = True

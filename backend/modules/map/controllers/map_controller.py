@@ -9,8 +9,9 @@ usecase = MapUseCase()
 FIXED_BOUNDS = {
     "north": 61.866972,
     "south": 61.703389,
-    "east": 34.087028,
-    "west": 34.654750,
+    # Keep west <= east; otherwise bounds filter becomes unsatisfiable.
+    "west": 34.087028,
+    "east": 34.654750,
 }
 
 

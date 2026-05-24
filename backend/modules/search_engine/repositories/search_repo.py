@@ -7,6 +7,23 @@ class SearchRepository:
     def __init__(self):
         self.collection = get_mongo_collection()
 
+    def _dedupe_by_header(self, documents):
+        seen = set()
+        unique_docs = []
+
+        for document in documents:
+            header = str(document.get("header") or document.get("title") or "").strip().lower()
+            if not header:
+                header = str(document.get("_id"))
+
+            if header in seen:
+                continue
+
+            seen.add(header)
+            unique_docs.append(document)
+
+        return unique_docs
+
     def _normalize_value(self, value):
         if isinstance(value, (datetime, date)):
             return value.isoformat()
@@ -56,7 +73,7 @@ class SearchRepository:
     def search(self, query: str, filters: dict):
         mongo_query = self._build_query(query, filters)
         cursor = self.collection.find(mongo_query)
-        return [self._serialize_document(document) for document in cursor]
+        return [self._serialize_document(document) for document in self._dedupe_by_header(list(cursor))]
 
     def filter(self, filters: dict):
         return self.search(query=None, filters=filters)

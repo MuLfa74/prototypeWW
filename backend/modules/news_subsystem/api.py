@@ -1,7 +1,7 @@
 # api.py
 from fastapi import APIRouter, Depends, Query, HTTPException
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, List
 
 from service import NewsService
 from repository import NewsRepository
@@ -13,7 +13,7 @@ def get_news_service() -> NewsService:
     # Репозиторий не требует сессий, можно создать напрямую
     return NewsService(NewsRepository())
 
-@router.get("/", response_model=list[NewsOut])
+@router.get("/", response_model=List[NewsOut])
 def get_news(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -29,6 +29,15 @@ def get_news(
     )
     return service.get_news(pagination, filters)
 
+@router.get("/daily-summary", response_model=DailySummary)
+def get_daily_summary(
+    date_param: date = Query(default=datetime.today().date(), alias="date"),
+    service: NewsService = Depends(get_news_service)
+):
+    """Ежедневная сводка (дайджест) за указанную дату."""
+    target = datetime.combine(date_param, datetime.min.time())
+    return service.get_daily_summary(target)
+
 @router.get("/{news_id}", response_model=NewsDetail)
 def get_news_detail(
     news_id: str,
@@ -39,12 +48,3 @@ def get_news_detail(
         return service.get_news_by_id(news_id)
     except ValueError:
         raise HTTPException(status_code=404, detail="News not found")
-
-@router.get("/daily-summary", response_model=DailySummary)
-def get_daily_summary(
-    date_param: date = Query(default=datetime.today().date(), alias="date"),
-    service: NewsService = Depends(get_news_service)
-):
-    """Ежедневная сводка (дайджест) за указанную дату."""
-    target = datetime.combine(date_param, datetime.min.time())
-    return service.get_daily_summary(target)

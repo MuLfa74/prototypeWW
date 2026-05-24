@@ -10,34 +10,30 @@
 <body>
     <script src="/js/config.js"></script>
     <div class="header">
-        <label>PrototypeWW</label>
+        <div style="display:flex; flex-direction:column;">
+            <label>PrototypeWW</label>
+            <div id="news-last-updated" style="font-size:12px; opacity:.75; margin-top:2px;">Последнее обновление: ...</div>
+        </div>
         <div class="inputtext">
             <img sizes="" src="/assets/search-svgrepo-com.svg" alt="Найти">
             <input type="text" id="search-input" placeholder="Поиск">
         </div>
-        <div class="button"><a href="mappage.html">Карта</a></div>
+        <div class="button"><a href="/map">Карта</a></div>
     </div>
     <div class="main-content">
         <div class="side-bar">
             <label>Категории</label>
-            <div class="card category-btn" data-category="Общество">Бытовые новости</div>
+            <div class="card category-btn" data-category="Общество">Общество</div>
             <div class="card category-btn" data-category="ДТП">ДТП</div>
             <div class="card category-btn" data-category="Происшествия">Происшествия</div>
             <div class="card category-btn" data-category="Культура">Культура</div>
         </div>
-        <div class="feed" id="feed">
-            <script src="/js/render_news.js"></script>
-            <script>
-                if (document.getElementById('feed').querySelectorAll('.event').length === 0) {
-                    document.getElementById('feed').innerHTML = '<center>Упс.. кажется новостей нет</center>';
-                }
-            </script>
-        </div>
+        <div class="feed" id="feed"></div>
+        <script src="/js/render_news.js"></script>
+        <script src="/js/search.js"></script>
         <div class="side-bar">
             <label>Сводка дня</label>
-            <!--Заглушки-->
-            <div class="event">aaa</div>
-            <div class="event">aaa</div>
+            <div id="daily-summary"></div>
         </div>
     </div>
 </body>

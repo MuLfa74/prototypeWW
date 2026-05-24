@@ -6,8 +6,28 @@ class MapRepository:
     def __init__(self):
         self.collection = get_mongo_collection()
 
+    def _dedupe_by_header(self, documents):
+        seen = set()
+        unique_docs = []
+
+        for document in documents:
+            header = str(document.get("header") or document.get("title") or "").strip().lower()
+            if not header:
+                header = str(document.get("_id"))
+
+            if header in seen:
+                continue
+
+            seen.add(header)
+            unique_docs.append(document)
+
+        return unique_docs
+
     def get_news(self, bounds: dict, filters: dict, date_range: dict, limit: int = 1000):
-        clauses = [self._date_clause(date_range)]
+        clauses = []
+
+        if date_range:
+            clauses.append(self._date_clause(date_range))
 
         if bounds:
             clauses.append(self._bounds_clause(bounds))
@@ -24,21 +44,36 @@ class MapRepository:
         query = {"$and": [clause for clause in clauses if clause]}
 
         cursor = self.collection.find(query).sort("date", -1).limit(limit)
-        return list(cursor)
+        return self._dedupe_by_header(list(cursor))
 
     def _date_clause(self, date_range: dict):
+        # Use safe conversion so malformed date values do not crash the whole query.
         return {
             "$expr": {
                 "$and": [
                     {
                         "$gte": [
-                            {"$toDate": "$date"},
+                            {
+                                "$convert": {
+                                    "input": "$date",
+                                    "to": "date",
+                                    "onError": None,
+                                    "onNull": None,
+                                }
+                            },
                             date_range["from"],
                         ]
                     },
                     {
                         "$lte": [
-                            {"$toDate": "$date"},
+                            {
+                                "$convert": {
+                                    "input": "$date",
+                                    "to": "date",
+                                    "onError": None,
+                                    "onNull": None,
+                                }
+                            },
                             date_range["to"],
                         ]
                     },
@@ -51,6 +86,9 @@ class MapRepository:
         south = float(bounds["south"])
         east = float(bounds["east"])
         west = float(bounds["west"])
+
+        # Normalize bounds so west <= east even if input is swapped.
+        west, east = min(west, east), max(west, east)
 
         inside_clauses = []
 
@@ -66,6 +104,22 @@ class MapRepository:
                     longitude_field: {"$gte": west, "$lte": east},
                 }
             )
+
+        # Support collector format: geodata.coordinates = [lat, lon]
+        inside_clauses.append(
+            {
+                "geodata.coordinates.0": {"$gte": south, "$lte": north},
+                "geodata.coordinates.1": {"$gte": west, "$lte": east},
+            }
+        )
+
+        # Also support reversed order: geodata.coordinates = [lon, lat]
+        inside_clauses.append(
+            {
+                "geodata.coordinates.1": {"$gte": south, "$lte": north},
+                "geodata.coordinates.0": {"$gte": west, "$lte": east},
+            }
+        )
 
         missing_coordinates_clause = {
             "geodata": {"$exists": False},

@@ -1,1 +1,7 @@
-!
+beautifulsoup4
+requests
+pymongo
+fastapi
+uvicorn
+vk_api
+python-dotenv

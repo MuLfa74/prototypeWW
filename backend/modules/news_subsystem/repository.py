@@ -11,6 +11,23 @@ class NewsRepository:
         # Получаем коллекцию через единый db.py
         self.collection = get_mongo_collection()
 
+    def _dedupe_by_header(self, documents: List[dict]) -> List[dict]:
+        seen = set()
+        unique_docs = []
+
+        for document in documents:
+            header = str(document.get("header") or document.get("title") or "").strip().lower()
+            if not header:
+                header = str(document.get("_id"))
+
+            if header in seen:
+                continue
+
+            seen.add(header)
+            unique_docs.append(document)
+
+        return unique_docs
+
     def find_all(
         self,
         offset: int,
@@ -31,7 +48,7 @@ class NewsRepository:
 
         # Сортировка по дате (новые сначала)
         cursor = self.collection.find(query).sort("date", -1).skip(offset).limit(limit)
-        return list(cursor)
+        return self._dedupe_by_header(list(cursor))
 
     def find_by_id(self, event_id: str) -> Optional[dict]:
         """Получение новости по _id."""
@@ -45,4 +62,4 @@ class NewsRepository:
         """Все новости за временной промежуток (без лимита)."""
         query = {"date": {"$gte": start_date, "$lte": end_date}}
         cursor = self.collection.find(query).sort("date", -1)
-        return list(cursor)
+        return self._dedupe_by_header(list(cursor))
