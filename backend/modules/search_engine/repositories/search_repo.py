@@ -1,51 +1,70 @@
-# repositories/search_repository.py
-from elasticsearch import Elasticsearch
-# репозиторий для взаимодействия с Elasticsearch и выполнения запросов на поиск и фильтрацию событий
+import re
+import sys
+from datetime import date, datetime
+from pathlib import Path
+
+
+MODULES_DIR = Path(__file__).resolve().parents[2]
+if str(MODULES_DIR) not in sys.path:
+    sys.path.append(str(MODULES_DIR))
+
+from bd import get_mongo_collection
+
+
 class SearchRepository:
     def __init__(self):
-        self.es = Elasticsearch("http://localhost:9200")
-        self.index = "news"
+        self.collection = get_mongo_collection()
 
-    def search(self, query: str, filters: dict):
-        must = []
-        filter_clauses = []
+    def _normalize_value(self, value):
+        if isinstance(value, (datetime, date)):
+            return value.isoformat()
+
+        if isinstance(value, dict):
+            return {key: self._normalize_value(item) for key, item in value.items()}
+
+        if isinstance(value, list):
+            return [self._normalize_value(item) for item in value]
+
+        if isinstance(value, tuple):
+            return [self._normalize_value(item) for item in value]
+
+        return value
+
+    def _serialize_document(self, document: dict) -> dict:
+        serialized = self._normalize_value(dict(document))
+        if "_id" in serialized:
+            serialized["_id"] = str(serialized["_id"])
+        return serialized
+
+    def _build_query(self, query: str, filters: dict):
+        mongo_query = {}
 
         if query:
-            must.append({
-                "multi_match": {
-                    "query": query,
-                    "fields": ["header", "content", "annotation"]
-                }
-            })
+            escaped_query = re.escape(query)
+            mongo_query["$or"] = [
+                {"header": {"$regex": escaped_query, "$options": "i"}},
+                {"content": {"$regex": escaped_query, "$options": "i"}},
+                {"annotation": {"$regex": escaped_query, "$options": "i"}},
+            ]
 
-        if "category" in filters:
-            filter_clauses.append({
-                "term": {"category": filters["category"]}
-            })
+        category = filters.get("category")
+        if category:
+            mongo_query["category"] = category
 
-        if "date_from" in filters or "date_to" in filters:
-            range_query = {}
-            if "date_from" in filters:
-                range_query["gte"] = filters["date_from"]
-            if "date_to" in filters:
-                range_query["lte"] = filters["date_to"]
+        date_filter = {}
+        if filters.get("date_from"):
+            date_filter["$gte"] = filters["date_from"]
+        if filters.get("date_to"):
+            date_filter["$lte"] = filters["date_to"]
+        if date_filter:
+            mongo_query["date"] = date_filter
 
-            filter_clauses.append({
-                "range": {"date": range_query}
-            })
+        return mongo_query
 
-        body = {
-            "query": {
-                "bool": {
-                    "must": must,
-                    "filter": filter_clauses
-                }
-            }
-        }
-
-        response = self.es.search(index=self.index, body=body)
-
-        return [hit["_source"] for hit in response["hits"]["hits"]]
+    def search(self, query: str, filters: dict):
+        mongo_query = self._build_query(query, filters)
+        cursor = self.collection.find(mongo_query)
+        return [self._serialize_document(document) for document in cursor]
 
     def filter(self, filters: dict):
         return self.search(query=None, filters=filters)
