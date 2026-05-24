@@ -67,11 +67,21 @@ def connect(mongo_uri: str = None, database: str = None, collection: str = None)
 
     return _client
 
-
-def get_mongo_collection():
-    """Возвращает кэшированную коллекцию. Если клиент не создан — автоматически подключается."""
+def get_mongo_collection(collection_name: str = None):
+    """
+    Возвращает коллекцию MongoDB.
+    Если collection_name не указан, используется значение из переменной окружения MONGO_COLLECTION.
+    """
     global _client, _database_name, _collection_name
     if _client is None:
-        raise RuntimeError("MongoClient не инициализирован. Вызовите bd.connect() при старте приложения")
+        raise RuntimeError("MongoClient не инициализирован. Вызовите db.connect() при старте приложения")
+    
+    coll_name = collection_name or _collection_name
+    return _client[_database_name][coll_name]
 
-    return _client[_database_name][_collection_name]
+
+def close():
+    global _client
+    if _client:
+        _client.close()
+        _client = None

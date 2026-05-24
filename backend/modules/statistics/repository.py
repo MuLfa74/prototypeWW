@@ -2,16 +2,13 @@
 from datetime import date
 from typing import List
 from pymongo import ASCENDING
-from database import get_collection
+from db import get_mongo_collection
 
 class StatsRepository:
     def __init__(self):
-        self.collection = get_collection()
-        # Гарантируем уникальность: одна запись на (newsId, date, source)
-        self.collection.create_index(
-            [("newsId", ASCENDING), ("date", ASCENDING), ("source", ASCENDING)],
-            unique=True
-        )
+        # Используем коллекцию "daily_stats" для статистики
+        self.collection = get_mongo_collection("daily_stats")
+        # Индекс будет создаваться в lifespan main.py, чтобы не создавать каждый раз
 
     def upsert_daily_stats(self, newsId: str, date_obj: date, source: str) -> None:
         """Атомарно увеличить счётчик кликов."""
