@@ -2,9 +2,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from pymongo import ASCENDING
-
-# Импорт из корневого db.py
-from backend.db import connect, close, get_mongo_collection
+from db import connect, close, get_mongo_collection
 from api import router
 from config import settings
 

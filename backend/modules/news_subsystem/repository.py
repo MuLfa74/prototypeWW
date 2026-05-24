@@ -2,9 +2,7 @@
 from datetime import datetime, time
 from typing import List, Optional
 from bson import ObjectId
-
-# Импорт из корневого модуля db.py (относительный путь: подняться на два уровня вверх)
-from ...db import get_mongo_collection
+from db import get_mongo_collection
 from models import NewsFilters
 
 

@@ -5,9 +5,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from pymongo import ASCENDING, DESCENDING
 import uvicorn
-
-# Импортируем из корневого db.py
-from ...db import connect, get_mongo_collection
+from db import connect, get_mongo_collection
 from api import router
 from config import settings
 

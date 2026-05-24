@@ -2,9 +2,7 @@
 from datetime import date
 from typing import List
 from pymongo import ASCENDING
-
-# Абсолютный импорт из корневого db.py (предполагается, что backend в PYTHONPATH)
-from backend.db import get_mongo_collection
+from db import get_mongo_collection
 
 class StatsRepository:
     def __init__(self):
