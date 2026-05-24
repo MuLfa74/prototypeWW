@@ -1,9 +1,13 @@
+"""
+Общие функции для парсинга новостных сайтов
+"""
 import re
 import json
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+# Конфигурация категорий
 CATEGORIES_CONFIG = {
     "categories": [
         {
@@ -45,6 +49,7 @@ def get_user_agent():
     return {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
 def categorize_news(title, content):
+    """Определяет категорию новости на основе заголовка и текста"""
     text_for_search = (title + " " + content).lower()
     category_scores = {}
     
@@ -72,18 +77,17 @@ def categorize_news(title, content):
         return {
             "code": "social",
             "name": "Общественная жизнь",
-            "confidence": 0,
-            "matched_keywords": []
+            "confidence": 0
         }
     
     return {
         "code": best_category[0],
         "name": best_category[1]["name"],
-        "confidence": best_category[1]["score"],
-        "matched_keywords": best_category[1]["matched_keywords"]
+        "confidence": best_category[1]["score"]
     }
 
 def trim_to_sentence(text, min_len=600, max_len=700):
+    """Обрезает текст до длины между min_len и max_len, заканчивая на границе предложения"""
     if len(text) <= max_len:
         return text
     
@@ -113,6 +117,7 @@ def trim_to_sentence(text, min_len=600, max_len=700):
         return text[:max_len] + "..."
 
 def clean_text(text):
+    """Очищает текст от лишних пробелов и специальных символов"""
     text = re.sub(r'\s+', ' ', text)
     remove_phrases = [
         r'Наш сайт использует файлы cookies.*',
@@ -129,12 +134,51 @@ def clean_text(text):
         text = re.sub(phrase, '', text, flags=re.IGNORECASE)
     return text.strip()
 
+def create_annotation(content, max_len=200):
+    """
+    Создает краткое описание (аннотацию) из текста новости
+    
+    Args:
+        content (str): Полный текст новости
+        max_len (int): Максимальная длина аннотации
+    
+    Returns:
+        str: Краткое описание
+    """
+    if not content:
+        return ""
+    
+    # Берем первое предложение
+    sentences = re.split(r'[.!?]', content)
+    if sentences and sentences[0]:
+        annotation = sentences[0].strip()
+        if len(annotation) > max_len:
+            annotation = annotation[:max_len] + "..."
+        return annotation
+    
+    # Если не получилось, берем начало текста
+    return content[:max_len].strip() + "..."
+
 def save_all_to_json(all_news, filename='all_news.json'):
+    """Сохраняет все новости в один JSON файл в нужном формате"""
     clean_news_list = []
     for news in all_news:
-        clean_news = news.copy()
-        if 'matched_keywords' in clean_news:
-            del clean_news['matched_keywords']
+        clean_news = {
+            "header": news.get('title', ''),
+            "content": news.get('content', news.get('text', '')),
+            "annotation": create_annotation(news.get('content', news.get('text', '')), 200),
+            "category": news['category']['name'],
+            "date": news.get('date', ''),
+            "source": news.get('source', ''),
+            "link": news.get('link', '')
+        }
+        
+        # Добавляем геоданные, если есть (без location_name)
+        if 'geodata' in news and news['geodata']:
+            clean_news['geodata'] = news['geodata']
+        else:
+            clean_news['geodata'] = None
+        
         clean_news_list.append(clean_news)
     
     output = {
@@ -151,11 +195,11 @@ def save_all_to_json(all_news, filename='all_news.json'):
     
     print(f"\n💾 Все новости сохранены в файл: {filename}")
     print(f"   Всего новостей: {len(clean_news_list)}")
-    print(f"   Источники: {', '.join(output['metadata']['sources'])}")
 
 def print_category_statistics(all_news):
+    """Выводит статистику по категориям в консоль"""
     print("\n" + "="*60)
-    print("📊 СТАТИСТИКА ПО КАТЕГОРИЯМ (ВСЕ ИСТОЧНИКИ)")
+    print("📊 СТАТИСТИКА ПО КАТЕГОРИЯМ")
     print("="*60)
     
     category_counts = {}
@@ -163,7 +207,7 @@ def print_category_statistics(all_news):
     
     for news in all_news:
         cat_name = news['category']['name']
-        source = news['source']
+        source = news.get('source', 'unknown')
         category_counts[cat_name] = category_counts.get(cat_name, 0) + 1
         source_counts[source] = source_counts.get(source, 0) + 1
     

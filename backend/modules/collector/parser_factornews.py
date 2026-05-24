@@ -78,4 +78,28 @@ def parse_factornews(max_news=5):
             
             print(f"\n[{idx}/{max_news}] factornews.ru: {title[:50]}...")
             news_text = parse_news_content(full_link)
-            category_info = categorize_news(title, news
+            category_info = categorize_news(title, news_text)
+            
+            all_news.append({
+                'source': 'factornews.ru',
+                'title': title,
+                'date': date_value,
+                'link': full_link,
+                'content': news_text,
+                'category': {
+                    'code': category_info['code'],
+                    'name': category_info['name'],
+                    'confidence': category_info['confidence']
+                }
+            })
+            
+            print(f"  📌 Категория: {category_info['name']}")
+            print(f"  📝 Длина текста: {len(news_text)} символов")
+            
+            time.sleep(0.5)
+            
+        except Exception as e:
+            print(f"  ❌ Ошибка при обработке: {e}")
+            continue
+    
+    return all_news

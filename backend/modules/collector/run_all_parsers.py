@@ -1,8 +1,9 @@
 """
-Запуск всех парсеров новостей (сайты + VK)
+Запуск всех парсеров новостей (сайты + VK) с определением геолокации
 """
 import sys
 from news_parser_common import save_all_to_json, print_category_statistics
+from geolocation_utils import extract_geodata_from_text, print_geodata_usage_stats
 
 # Импортируем парсеры
 from parser_factornews import parse_factornews
@@ -11,15 +12,7 @@ from parser_vk import parse_all_vk_groups
 
 def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True):
     """
-    Запускает все парсеры и объединяет результаты
-    
-    Args:
-        max_news_per_source (int): Максимум новостей с каждого источника
-        include_vk (bool): Включать ли VK парсер
-        save_to_file (bool): Сохранять ли результат в файл
-    
-    Returns:
-        list: Список всех новостей
+    Запускает все парсеры и объединяет результаты с определением геолокации
     """
     print("="*60)
     print("🚀 ЗАПУСК ВСЕХ ПАРСЕРОВ НОВОСТЕЙ")
@@ -27,8 +20,7 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True):
     print(f"📌 Максимум новостей с каждого источника: {max_news_per_source}")
     if include_vk:
         print("📌 Источники: factornews.ru, gubdaily.ru, VK (dtpptz, petrozavodsklive, nashakarelia)")
-    else:
-        print("📌 Источники: factornews.ru, gubdaily.ru")
+    print("📍 Автоматическое определение геолокации по тексту")
     print("="*60)
     
     all_news = []
@@ -39,6 +31,10 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True):
     print("="*60)
     factornews_news = parse_factornews(max_news=max_news_per_source)
     if factornews_news:
+        # Добавляем геоданные
+        for news in factornews_news:
+            geodata = extract_geodata_from_text(news['content'], news['title'])
+            news['geodata'] = geodata
         all_news.extend(factornews_news)
         print(f"\n✅ factornews.ru: спарсено {len(factornews_news)} новостей")
     else:
@@ -50,6 +46,10 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True):
     print("="*60)
     gubdaily_news = parse_gubdaily(max_news=max_news_per_source)
     if gubdaily_news:
+        # Добавляем геоданные
+        for news in gubdaily_news:
+            geodata = extract_geodata_from_text(news['content'], news['title'])
+            news['geodata'] = geodata
         all_news.extend(gubdaily_news)
         print(f"\n✅ gubdaily.ru: спарсено {len(gubdaily_news)} новостей")
     else:
@@ -62,6 +62,12 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True):
         print("="*60)
         vk_news = parse_all_vk_groups(max_posts_per_group=max_news_per_source)
         if vk_news:
+            # Добавляем геоданные
+            for news in vk_news:
+                geodata = extract_geodata_from_text(news['text'], news['title'])
+                news['geodata'] = geodata
+                # Переименовываем text в content для единообразия
+                news['content'] = news.pop('text')
             all_news.extend(vk_news)
             print(f"\n✅ VK: спарсено {len(vk_news)} постов")
         else:
@@ -77,11 +83,7 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True):
     print(f"✅ Всего спарсено новостей: {len(all_news)}")
     
     print_category_statistics(all_news)
-    
-    # Дополнительная статистика по VK geo
-    vk_geo_count = sum(1 for news in all_news if news.get('geo'))
-    if vk_geo_count > 0:
-        print(f"\n📍 VK посты с геолокацией: {vk_geo_count}")
+    print_geodata_usage_stats(all_news)
     
     if save_to_file:
         save_all_to_json(all_news, 'all_news.json')
@@ -91,7 +93,7 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True):
 def main():
     """Точка входа для однократного запуска"""
     MAX_NEWS_PER_SOURCE = 5
-    INCLUDE_VK = True  # Меняй на False, если не нужно парсить VK
+    INCLUDE_VK = True
     
     try:
         run_all_parsers(
