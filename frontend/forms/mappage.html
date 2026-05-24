@@ -15,7 +15,7 @@
 </head>
 
 <body>
-
+    <script src="../js/config.js"></script>
     <!-- HEADER -->
     <div class="header">
 
@@ -23,15 +23,12 @@
 
         <div class="inputtext">
 
-            <img
-                src="../assets/search-svgrepo-com.svg"
-                alt="Поиск"
-            >
+            <img src="../assets/search-svgrepo-com.svg" alt="Поиск">
 
             <input
                 type="text"
                 id="search-input"
-                placeholder="Поиск события"
+                placeholder="Поиск"
             >
 
         </div>
@@ -54,6 +51,13 @@
 
             <div
                 class="card category-btn"
+                data-category="Общество"
+            >
+                Общество
+            </div>
+
+            <div
+                class="card category-btn"
                 data-category="ДТП"
             >
                 ДТП
@@ -65,7 +69,9 @@
             >
                 Происшествия
             </div>
-
+            
+            
+            
             <div
                 class="card category-btn"
                 data-category="Культура"
@@ -73,12 +79,6 @@
                 Культура
             </div>
 
-            <div
-                class="card category-btn"
-                data-category="Общество"
-            >
-                Общество
-            </div>
 
         </div>
 
@@ -113,6 +113,7 @@
         </div>
 
     </div>
+
 
     <script src="../js/map.js"></script>
 

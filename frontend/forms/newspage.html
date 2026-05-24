@@ -8,6 +8,7 @@
     <title>PrototypeWW | News</title>
 </head>
 <body>
+    <script src="../js/config.js"></script>
     <div class="header">
         <label>PrototypeWW</label>
         <div class="inputtext">
@@ -19,10 +20,10 @@
     <div class="main-content">
         <div class="side-bar">
             <label>Категории</label>
-            <div class="card"><a>Бытовые новости</a></div>
-            <div class="card">ДТП</div>
-            <div class="card">Происшествия</div>
-            <div class="card">Культура</div>
+            <div class="card category-btn" data-category="Общество">Бытовые новости</div>
+            <div class="card category-btn" data-category="ДТП">ДТП</div>
+            <div class="card category-btn" data-category="Происшествия">Происшествия</div>
+            <div class="card category-btn" data-category="Культура">Культура</div>
         </div>
         <div class="feed" id="feed">
             <script src="../js/render_news.js"></script>

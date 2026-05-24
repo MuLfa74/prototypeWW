@@ -112,7 +112,7 @@ label{
     gap: 10px;
 }
 
-.side-bar .card{
+.card{
     display: flex;
     justify-content: center; 
     align-items: center;
@@ -120,4 +120,19 @@ label{
     border-radius: 20px;
     width: 100%;
     height: 3em;
+}
+
+.category-btn{
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+}
+
+.category-btn:hover{
+    background-color: #5f5a5a;
+}
+
+.category-btn.active{
+    outline: 2px solid white;
+    background-color: #5f5a5a;
 }

@@ -1,200 +1,112 @@
-// Данные событий
-const events = [
-
-    {
-        id: 1,
-        header: "ДТП на перекрестке",
-        annotation: "Столкновение двух автомобилей.",
-        category: "ДТП",
-        date: "23.05.2026",
-        coords: [61.7849, 34.3469]
-    },
-
-    {
-        id: 2,
-        header: "Открытие выставки",
-        annotation: "В музее открылась новая выставка.",
-        category: "Культура",
-        date: "23.05.2026",
-        coords: [61.7810, 34.3590]
-    },
-
-    {
-        id: 3,
-        header: "Пожар в районе",
-        annotation: "Пожарные ликвидировали возгорание.",
-        category: "Происшествия",
-        date: "22.05.2026",
-        coords: [61.7900, 34.3700]
-    },
-
-    {
-        id: 4,
-        header: "Городское мероприятие",
-        annotation: "На площади прошло общественное мероприятие.",
-        category: "Общество",
-        date: "21.05.2026",
-        coords: [61.7750, 34.3400]
-    }
-
-];
-
-let map;
-
-// Массив выбранных категорий
-let selectedCategories = [];
+let map; 
+let selectedCategories = []; 
+let allEventsFromServer = [];
 
 // INIT MAP
 ymaps.ready(init);
 
-function init(){
-
+async function init(){
+    // 1. Инициализируем карту
     map = new ymaps.Map("map", {
-
-        center: [61.7849, 34.3469],
-
+        center: [61.7849, 34.3469], 
         zoom: 12,
-
-        controls: [
-            'zoomControl',
-            'fullscreenControl'
-        ]
-
+        controls: ['zoomControl', 'fullscreenControl']
     });
 
-    // Показываем все события
-    renderMarkers(events, map);
+    // 2. Загружаем данные с контроллера
+    allEventsFromServer = await loadEventsFromBackend();
+
+    // 3. Показываем все события на карте
+    renderMarkers(allEventsFromServer);
+}
+
+const BASE_URL = "127.0.0.1"; 
+
+// Функция запроса к FastAPI
+async function loadEventsFromBackend() {
+    try {
+        // Меняйте URL на ваш, если порт или хост отличаются
+        const response = await fetch(`${BASE_URL}/api/events/map?limit=1000`); 
+        if (!response.ok) throw new Error('Ошибка сети');
+        
+        const json = await response.json();
+        return json.data; // Возвращаем массив из {"data": result}
+    } catch (error) {
+        console.error("Не удалось загрузить события с бэкенда:", error);
+        return []; // Возвращаем пустой массив в случае ошибки, чтобы скрипт не падал
+    }
 }
 
 // Рендер маркеров
-function renderMarkers(data, map){
-
+function renderMarkers(data){
+    if (!map) return;
     map.geoObjects.removeAll();
 
     data.forEach(event => {
-
-        // Если есть выбранные категории
-        // и текущая не входит — пропускаем
-        if(
-            selectedCategories.length > 0 &&
-            !selectedCategories.includes(event.category)
-        ){
+        // Пропускаем, если категория не выбрана
+        if(selectedCategories.length > 0 && !selectedCategories.includes(event.category)){
             return;
         }
 
+        // ВАЖНО: Подстраиваем координаты под Яндекс.Карты.
+        // Если ваш usecase отдает lat и lng раздельно, собираем их в массив [lat, lng].
+        // Если он уже отдает массив coords, замените на: const coords = event.coords;
+        const coords = [event.lat, event.lng]; 
+
         const placemark = new ymaps.Placemark(
-
-            event.coords,
-
+            coords, 
             {
+                // Заменили event.header и event.annotation на ваши ключи из FastAPI (title/location)
                 balloonContent: `
-
-                    <strong>
-                        ${event.header}
-                    </strong>
-
+                    <strong>${event.title || 'Без названия'}</strong>
                     <br>
-
-                    ${event.annotation}
-
+                    ${event.location || ''}
                     <br><br>
-
-                    <b>${event.category}</b>
-
+                    <b>${event.category || 'Без категории'}</b>
                 `
-            },
-
-            {
-                preset: 'islands#redIcon'
-            }
-
+            }, 
+            { preset: 'islands#redIcon' }
         );
-
         map.geoObjects.add(placemark);
-
     });
-
 }
 
 // Категории
 const categoryButtons = document.querySelectorAll('.category-btn');
-
 categoryButtons.forEach(btn => {
-
     btn.addEventListener('click', () => {
-
         const category = btn.dataset.category;
-
-        // Toggle active
         btn.classList.toggle('active');
 
-        // Если категория уже есть — удалить
         if(selectedCategories.includes(category)){
-
-            selectedCategories =
-                selectedCategories.filter(
-                    c => c !== category
-                );
-
+            selectedCategories = selectedCategories.filter(c => c !== category);
         } else {
-
             selectedCategories.push(category);
-
         }
-
         applyFilters();
-
     });
-
 });
 
 // Поиск
-const searchInput =
-    document.getElementById('search-input');
-
+const searchInput = document.getElementById('search-input');
 searchInput.addEventListener('input', () => {
-
     applyFilters();
-
 });
 
-// Общая фильтрация
+// Общая фильтрация (ищет по сохраненному массиву allEventsFromServer)
 function applyFilters(){
+    const value = searchInput.value.toLowerCase();
+    
+    const filtered = allEventsFromServer.filter(event => {
+        // Безопасно проверяем строки на случай, если на бэке какое-то поле null
+        const title = (event.title || '').toLowerCase();
+        const location = (event.location || '').toLowerCase();
 
-    const value =
-        searchInput.value.toLowerCase();
-
-    const filtered = events.filter(event => {
-
-        const matchesSearch =
-
-            event.header
-                .toLowerCase()
-                .includes(value)
-
-            ||
-
-            event.annotation
-                .toLowerCase()
-                .includes(value);
-
-        const matchesCategory =
-
-            selectedCategories.length === 0
-
-            ||
-
-            selectedCategories.includes(
-                event.category
-            );
-
-        return (
-            matchesSearch &&
-            matchesCategory
-        );
-
+        const matchesSearch = title.includes(value) || location.includes(value);
+        const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(event.category);
+        
+        return matchesSearch && matchesCategory;
     });
 
     renderMarkers(filtered);
-
 }
