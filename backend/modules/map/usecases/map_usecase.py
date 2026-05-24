@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from repositories.map_repo import MapRepository
+from modules.map.repositories.map_repo import MapRepository
 
 
 class MapUseCase:
