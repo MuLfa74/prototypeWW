@@ -63,11 +63,11 @@ function init(){
     });
 
     // Показываем все события
-    renderMarkers(events);
+    renderMarkers(events, map);
 }
 
 // Рендер маркеров
-function renderMarkers(data){
+function renderMarkers(data, map){
 
     map.geoObjects.removeAll();
 
