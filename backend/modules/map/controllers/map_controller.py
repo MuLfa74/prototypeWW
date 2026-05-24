@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from usecases.map_usecase import MapUseCase
+from modules.map.usecases.map_usecase import MapUseCase
 
 
 router = APIRouter()
