@@ -12,21 +12,6 @@
     overflow: hidden;
 }
 
-.category-btn{
-    cursor: pointer;
-    transition: 0.2s;
-    user-select: none;
-}
-
-.category-btn:hover{
-    background-color: #5f5a5a;
-}
-
-.category-btn.active{
-    outline: 2px solid white;
-    background-color: #5f5a5a;
-}
-
 .header .button a{
     color: white;
     text-decoration: none;

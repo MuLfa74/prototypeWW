@@ -8,7 +8,7 @@ const searchInput = document.getElementById('search-input');
 const feedContainer = document.getElementById('feed');
 const categoryButtons = document.querySelectorAll('.category-btn');
 
-const BASE_URL = ""; 
+const BASE_URL = "127.0.0.1"; 
 
 // Главная функция запроса к FastAPI
 async function loadEvents() {
