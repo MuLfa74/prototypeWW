@@ -1,14 +1,6 @@
 import re
-import sys
 from datetime import date, datetime
-from pathlib import Path
-
-
-MODULES_DIR = Path(__file__).resolve().parents[2]
-if str(MODULES_DIR) not in sys.path:
-    sys.path.append(str(MODULES_DIR))
-
-from bd import get_mongo_collection
+from db import get_mongo_collection
 
 
 class SearchRepository:
