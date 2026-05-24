@@ -1,7 +1,6 @@
 # service.py
 from datetime import datetime, time
 from typing import List
-
 from repository import NewsRepository
 from models import NewsOut, NewsDetail, DailySummary, NewsFilters, PaginationParams
 from config import settings
