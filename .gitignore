@@ -1,3 +1,4 @@
 .env
 test_pars.json
 all_news.json
+__pycache__/

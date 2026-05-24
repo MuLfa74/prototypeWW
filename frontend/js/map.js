@@ -20,13 +20,11 @@ async function init(){
     renderMarkers(allEventsFromServer);
 }
 
-const BASE_URL = "127.0.0.1"; 
-
 // Функция запроса к FastAPI
 async function loadEventsFromBackend() {
     try {
         // Меняйте URL на ваш, если порт или хост отличаются
-        const response = await fetch(`${BASE_URL}/api/events/map?limit=1000`); 
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/events/map?limit=1000`); 
         if (!response.ok) throw new Error('Ошибка сети');
         
         const json = await response.json();
