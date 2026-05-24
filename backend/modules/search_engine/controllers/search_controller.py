@@ -1,6 +1,6 @@
-# контроллер для обработки запросов на поиск и фильтрацию событий
 from fastapi import APIRouter, Query
-from usecases.search_usecase import SearchUseCase
+
+from modules.search_engine.usecases.search_usecase import SearchUseCase
 
 router = APIRouter()
 usecase = SearchUseCase()
