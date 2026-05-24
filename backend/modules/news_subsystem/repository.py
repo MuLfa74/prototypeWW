@@ -3,12 +3,15 @@ from datetime import datetime, time
 from typing import List, Optional
 from bson import ObjectId
 
-from database import get_collection
+# Импорт из корневого модуля db.py (относительный путь: подняться на два уровня вверх)
+from ...db import get_mongo_collection
 from models import NewsFilters
+
 
 class NewsRepository:
     def __init__(self):
-        self.collection = get_collection()
+        # Получаем коллекцию через единый db.py
+        self.collection = get_mongo_collection()
 
     def find_all(
         self,

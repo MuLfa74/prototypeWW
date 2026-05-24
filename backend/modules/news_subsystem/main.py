@@ -1,44 +1,36 @@
 # main.py
 import traceback
 import sys
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from pymongo import ASCENDING, DESCENDING
+import uvicorn
 
-print("Начало загрузки main.py")
+# Импортируем из корневого db.py
+from ...db import connect, get_mongo_collection
+from api import router
+from config import settings
 
-try:
-    print("Импорт модулей...")
-    from fastapi import FastAPI
-    from contextlib import asynccontextmanager
-    from pymongo import ASCENDING, DESCENDING
-    from database import connect_to_mongo, close_mongo_connection, get_collection
-    from api import router
-    from config import settings
-    import uvicorn
-    print("Все модули импортированы")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Подключение к MongoDB через единый db.py")
+    connect()  # инициализация клиента (можно без параметров, если .env настроен)
+    collection = get_mongo_collection()
+    
+    print("Создание индексов...")
+    collection.create_index([("date", DESCENDING)])
+    collection.create_index([("category", ASCENDING)])
+    collection.create_index([("date", DESCENDING), ("category", ASCENDING)])
+    print("Индексы созданы")
+    
+    yield
+    
+    # Закрытие соединения – желательно добавить функцию close() в db.py,
+    # но можно и не закрывать явно, если процесс завершается.
+    # Если нужно – добавьте close_mongo_connection() в db.py и вызовите здесь.
 
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        print("Запуск lifespan: подключение к MongoDB")
-        connect_to_mongo()
-        collection = get_collection()
-        print("Создание индексов...")
-        collection.create_index([("date", DESCENDING)])
-        collection.create_index([("category", ASCENDING)])
-        collection.create_index([("date", DESCENDING), ("category", ASCENDING)])
-        print("Индексы созданы")
-        yield
-        close_mongo_connection()
-        print("Соединение закрыто")
+app = FastAPI(title="News Subsystem (MongoDB)", lifespan=lifespan)
+app.include_router(router)
 
-    app = FastAPI(title="News Subsystem (MongoDB)", lifespan=lifespan)
-    app.include_router(router)
-    print("FastAPI приложение создано")
-
-    if __name__ == "__main__":
-        print("Запуск uvicorn сервера на http://0.0.0.0:8000")
-        uvicorn.run(app, host="0.0.0.0", port=8000)
-        print("Сервер остановлен")
-
-except Exception as e:
-    print("Критическая ошибка при запуске:")
-    traceback.print_exc()
-    sys.exit(1)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
