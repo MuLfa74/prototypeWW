@@ -1,6 +1,5 @@
 import re
-
-from bd import get_mongo_collection
+from db import get_mongo_collection
 
 
 class MapRepository:
