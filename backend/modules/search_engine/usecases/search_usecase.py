@@ -1,5 +1,4 @@
-from repositories.search_repo import SearchRepository
-# юзкейс для обработки логики поиска и фильтрации событий
+from modules.search_engine.repositories.search_repo import SearchRepository
 
 class SearchUseCase:
     def __init__(self):
