@@ -101,7 +101,7 @@ function renderFeed(data){
     }
 
     if (items.length === 0){
-        container.innerHTML = '<center>Упс.. кажется новостей нет((((((</center>';
+        container.innerHTML = '<center>Упс.. кажется новостей нет(</center>';
         return;
     }
 

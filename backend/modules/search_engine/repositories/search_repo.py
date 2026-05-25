@@ -72,7 +72,7 @@ class SearchRepository:
 
     def search(self, query: str, filters: dict):
         mongo_query = self._build_query(query, filters)
-        cursor = self.collection.find(mongo_query)
+        cursor = self.collection.find(mongo_query).sort("date", -1)
         return [self._serialize_document(document) for document in self._dedupe_by_header(list(cursor))]
 
     def filter(self, filters: dict):

@@ -5,6 +5,7 @@
 import sys
 import os
 import json
+import traceback
 from datetime import datetime
 
 try:
@@ -259,6 +260,7 @@ def run_all_parsers(max_news_per_source=5, include_vk=True, save_to_file=True, s
                 print(f"\n💾 Успешно сохранено в MongoDB: {saved_count} документов")
         except Exception as e:
             print(f"\n❌ Ошибка при работе с MongoDB: {e}")
+            traceback.print_exc()
         finally:
             close()
 

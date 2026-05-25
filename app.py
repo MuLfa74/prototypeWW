@@ -35,6 +35,7 @@ FORMS_DIR = "frontend/forms"
 COLLECTOR_DIR = os.path.join(BACKEND_PATH, 'modules', 'collector')
 COLLECTOR_SCRIPT = os.path.join(COLLECTOR_DIR, 'run_all_parsers.py')
 PARSE_STATUS_FILE = os.path.join(COLLECTOR_DIR, 'parse_status.json')
+VENV_PYTHON = os.path.join(PROJECT_ROOT, '.venv', 'Scripts', 'python.exe')
 
 
 class TrackSource(str, Enum):
@@ -98,17 +99,34 @@ def _read_parse_status():
         return {"last_updated": None, "news_count": 0, "sources": []}
 
 
+def _coerce_datetime(value):
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time())
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value)
+        except Exception:
+            return None
+    return None
+
+
 async def _run_parser_process():
     if not os.path.exists(COLLECTOR_SCRIPT):
         print(f"Parser script not found: {COLLECTOR_SCRIPT}")
         return
 
+    python_executable = VENV_PYTHON if os.path.exists(VENV_PYTHON) else sys.executable
+
     def _runner():
         return subprocess.run(
-            [sys.executable, COLLECTOR_SCRIPT],
+            [python_executable, COLLECTOR_SCRIPT],
             cwd=COLLECTOR_DIR,
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',
         )
 
     try:
@@ -154,10 +172,10 @@ async def daily_summary(limit: int = Query(5, ge=1, le=20)):
         stats_collection = _get_collection("daily_stats")
         news_collection = _get_collection()
 
-        today = date.today()
-        day_before = today - timedelta(days=1)
-        today_key = today.isoformat()
-        day_before_key = day_before.isoformat()
+        now = datetime.utcnow()
+        cutoff = now - timedelta(hours=24)
+        today_key = date.today().isoformat()
+        day_before_key = (date.today() - timedelta(days=1)).isoformat()
 
         # Take a wider candidate set first, then filter out invalid/missing news IDs.
         candidate_limit = max(limit * 50, 100)
@@ -189,6 +207,17 @@ async def daily_summary(limit: int = Query(5, ge=1, le=20)):
             for doc in news_collection.find({"_id": {"$in": news_ids}}):
                 docs_by_id[str(doc["_id"])] = doc
 
+        def _is_recent_news(doc):
+            parsed_at = _coerce_datetime(doc.get("parsed_at"))
+            if parsed_at and parsed_at >= cutoff:
+                return True
+
+            news_date = _coerce_datetime(doc.get("date"))
+            if news_date and news_date >= cutoff:
+                return True
+
+            return False
+
         items = []
         total_clicks = 0
         for stat in top_stats:
@@ -200,6 +229,9 @@ async def daily_summary(limit: int = Query(5, ge=1, le=20)):
 
             doc = docs_by_id.get(news_id)
             if not doc:
+                continue
+
+            if not _is_recent_news(doc):
                 continue
 
             items.append({

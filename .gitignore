@@ -1,4 +1,6 @@
 .env
+.venv
+.vscode
 test_pars.json
 all_news.json
 __pycache__/
